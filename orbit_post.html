@@ -108,5 +108,5 @@
     [['left','ArrowLeft'],['right','ArrowRight'],['thrust','thrust']].forEach(([id,k])=>{const b=document.querySelector('#'+id);['pointerdown','pointerenter'].forEach(ev=>b.addEventListener(ev,e=>{if(e.buttons||ev==='pointerdown')keys[k]=true}));['pointerup','pointerleave','pointercancel'].forEach(ev=>b.addEventListener(ev,()=>keys[k]=false));});
     new ResizeObserver(resize).observe(game);renderMissions();resize();draw();
   </script>
-</body>
+<script src="arcade_keybinds.js"></script></body>
 </html>
