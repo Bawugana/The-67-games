@@ -1,0 +1,17 @@
+body[data-game="slide"] .app,body[data-game="orbit"] .app,body[data-game="runner"] .app,
+body[data-game="frog"] .app,body[data-game="shield"] .app,body[data-game="mines"] .app,
+body[data-game="balance"] .app,body[data-game="whack"] .app,body[data-game="maze"] .app,
+body[data-game="paddle"] .app,body[data-game="snake"] .app{width:min(1120px,100%);height:100%;padding:clamp(6px,1.2vw,14px)}
+body[data-game="slide"] .stage,body[data-game="orbit"] .stage,body[data-game="runner"] .stage,
+body[data-game="frog"] .stage,body[data-game="shield"] .stage,body[data-game="mines"] .stage,
+body[data-game="balance"] .stage,body[data-game="whack"] .stage,body[data-game="maze"] .stage,
+body[data-game="paddle"] .stage,body[data-game="snake"] .stage{min-height:520px}
+body[data-game] .touch button{min-width:62px;min-height:54px;font-size:22px}
+@media(max-width:680px){
+ body[data-game="slide"] .stage,body[data-game="orbit"] .stage,body[data-game="runner"] .stage,
+ body[data-game="frog"] .stage,body[data-game="shield"] .stage,body[data-game="mines"] .stage,
+ body[data-game="balance"] .stage,body[data-game="whack"] .stage,body[data-game="maze"] .stage,
+ body[data-game="paddle"] .stage,body[data-game="snake"] .stage{min-height:0}
+ body[data-game] .touch{width:100%;justify-content:center}
+ body[data-game] .touch button{flex:1;max-width:88px;min-width:56px;min-height:62px;font-size:25px}
+}
