@@ -333,5 +333,5 @@
     document.querySelectorAll('[data-radius]').forEach(input=>input.oninput=()=>{const id=input.dataset.radius;radiusChoices[id]=Math.min(maxRadius(id),+input.value);localStorage.setItem('bawugana-radius-choices',JSON.stringify(radiusChoices));$(`#${id}RadiusValue`).textContent=`${Math.round(radiusChoices[id])}px / ${Math.round(maxRadius(id))}px`});
     $('#play').onclick=()=>{$('#start').classList.add('hidden');updateRadiusControls();$('#setup').classList.remove('hidden')};$('#launch').onclick=()=>{saveFormation();$('#setup').classList.add('hidden');start()};$('#again').onclick=()=>{$('#end').classList.add('hidden');updateRadiusControls();$('#setup').classList.remove('hidden')};draw();
   </script>
-<script src="arcade_keybinds.js"></script></body>
+<script src="arcade_keybinds.js"></script><script src="mobile_joystick.js?v=1"></script></body>
 </html>
