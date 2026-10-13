@@ -10,7 +10,7 @@
   const root = host.attachShadow({mode:'open'});
   root.innerHTML = `
     <style>
-      :host{display:none;position:fixed;right:max(24px,env(safe-area-inset-right));bottom:max(28px,env(safe-area-inset-bottom));z-index:2147483640;font-family:Arial,sans-serif}
+      :host{display:block;position:fixed;right:max(24px,env(safe-area-inset-right));bottom:max(28px,env(safe-area-inset-bottom));z-index:2147483640;font-family:Arial,sans-serif}
       button{position:relative;width:112px;height:104px;padding:0;border:0;background:transparent;cursor:pointer;touch-action:none;filter:drop-shadow(0 12px 13px #0009);-webkit-tap-highlight-color:transparent}
       .ear{position:absolute;top:2px;width:43px;height:48px;background:#ffb56b;border:4px solid #2b1c2f;transform:rotate(45deg);border-radius:9px 18px 7px 18px}
       .ear.left{left:12px}.ear.right{right:12px;transform:rotate(45deg) scale(-1,1)}
@@ -25,7 +25,6 @@
       button.pressed{transform:scale(.88) translateY(6px);filter:drop-shadow(0 5px 5px #0008)}
       button.pressed .eye{height:3px;top:37px;border-radius:4px}
       button.pressed .mouth{height:16px;background:#ff6585;border:3px solid #2b1c2f;border-top:0}
-      @media (hover:none),(pointer:coarse),(max-width:820px){:host{display:block}}
       @media(max-width:390px){button{width:96px;height:90px}.face{height:70px}.ear{width:37px;height:41px}.eye{top:25px}.nose{top:42px}.mouth{top:51px}.whisker{top:47px}.whisker.b,.whisker.d{top:57px}}
     </style>
     <button aria-label="Cat action button">
@@ -40,9 +39,9 @@
     button.classList.toggle('pressed', type === 'keydown');
     document.dispatchEvent(new KeyboardEvent(type,{key:' ',code:'Space',bubbles:true,cancelable:true}));
   }
-  button.addEventListener('pointerdown',e=>{e.preventDefault();button.setPointerCapture(e.pointerId);fire('keydown')});
-  button.addEventListener('pointerup',()=>fire('keyup'));
-  button.addEventListener('pointercancel',()=>fire('keyup'));
-  button.addEventListener('click',e=>e.preventDefault());
+  button.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();button.setPointerCapture(e.pointerId);fire('keydown')});
+  button.addEventListener('pointerup',e=>{e.preventDefault();e.stopPropagation();fire('keyup')});
+  button.addEventListener('pointercancel',e=>{e.stopPropagation();fire('keyup')});
+  button.addEventListener('click',e=>{e.preventDefault();e.stopPropagation()});
   addEventListener('blur',()=>fire('keyup'));
 })();
