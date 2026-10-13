@@ -20,6 +20,24 @@
     <button class="action" aria-label="Action button">ACTION</button>`;
   document.body.appendChild(host);
 
+  // Replace each featured game's old directional pad, while preserving its
+  // separate fire/dash/interact buttons.
+  const page = location.pathname.split('/').pop();
+  const oldMovementPads = {
+    'riftbound_skybreak.html': ['.touch > .stick'],
+    'sixty_seven_rush.html': ['.pad'],
+    'rivals_loadout_trainer.html': ['#moveStick'],
+    'bawugana_bawuganiii_rat_game.html': ['#touch > .pad'],
+    'aim_3d_trainer.html': ['#moveStick'],
+    'neon_blaster.html': ['#movePad'],
+    'orbit_post.html': ['.touch'],
+    'rift_67.html': ['.mobile > #stick'],
+    'swipe_the_crown.html': ['.touch > #stick']
+  };
+  for (const selector of oldMovementPads[page] || []) {
+    document.querySelectorAll(selector).forEach(pad => pad.style.setProperty('display','none','important'));
+  }
+
   const stick = root.querySelector('.stick');
   const nub = root.querySelector('.nub');
   const action = root.querySelector('.action');
