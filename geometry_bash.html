@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#071327">
+  <title>Geometry Bash</title>
+  <style>
+    :root{color-scheme:dark;--cyan:#55efff;--lime:#c8ff38;--pink:#ff4fa3;--ink:#f8fbff}
+    *{box-sizing:border-box}
+    html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#050918;color:var(--ink);font-family:Arial,Helvetica,sans-serif}
+    body{display:grid;place-items:center;background:radial-gradient(circle at 50% 20%,#173470 0,#08152e 36%,#050918 72%);user-select:none;-webkit-user-select:none}
+    button{font:inherit}
+    .game{position:relative;width:100%;height:100%;min-height:0;overflow:hidden;isolation:isolate}
+    canvas{display:block;width:100%;height:100%;touch-action:none}
+    .hud{position:absolute;inset:16px 18px auto;display:grid;grid-template-columns:88px 1fr 88px;align-items:center;gap:14px;pointer-events:none;text-shadow:0 3px 10px #000}
+    .brand{font-weight:1000;font-size:13px;letter-spacing:.12em;color:var(--lime)}
+    .progress{height:13px;border:2px solid #ffffff55;background:#061024aa;box-shadow:inset 0 0 8px #0008;transform:skewX(-12deg);overflow:hidden}
+    .progress i{display:block;width:0;height:100%;background:linear-gradient(90deg,var(--cyan),var(--lime));box-shadow:0 0 18px var(--cyan);transition:width 90ms linear}
+    .percent{text-align:right;font-weight:1000;font-size:14px}
+    .coins{position:absolute;left:18px;top:52px;color:#ffd84d;font-weight:1000;font-size:13px;text-shadow:0 3px 8px #000;pointer-events:none}
+    .overlay{position:absolute;inset:0;display:grid;place-items:center;padding:22px;background:linear-gradient(#03081722,#03081788);backdrop-filter:blur(3px);z-index:3}
+    .overlay[hidden]{display:none}
+    .card{width:min(540px,100%);border:2px solid #ffffff2e;border-radius:7px;padding:clamp(20px,4vw,34px);text-align:center;background:linear-gradient(145deg,#14285ff2,#09142cf5);box-shadow:0 24px 80px #000b,inset 0 1px #ffffff30;transform:skewX(-1deg)}
+    .eyebrow{color:var(--cyan);font-weight:1000;font-size:12px;letter-spacing:.17em;text-transform:uppercase}
+    h1{margin:9px 0 8px;font-size:clamp(40px,9vw,72px);line-height:.82;letter-spacing:-.065em;text-transform:uppercase;text-shadow:0 5px 0 #562d9d,0 9px 24px #000}
+    h1 span{color:var(--lime)}
+    .message{margin:15px auto 20px;max-width:410px;color:#c8d5f0;font-size:14px;line-height:1.5}
+    .play{min-width:210px;min-height:58px;border:2px solid #fff8;border-radius:5px;padding:0 26px;background:linear-gradient(135deg,var(--lime),#5af3be);color:#07131a;font-weight:1000;font-size:18px;letter-spacing:.08em;cursor:pointer;box-shadow:inset 0 -8px #0b9a6438,0 9px 0 #173c35,0 16px 30px #0008;transform:skewX(-5deg)}
+    .play:hover,.play:focus-visible{filter:brightness(1.1);outline:3px solid #fff8;outline-offset:4px}
+    .play:active{transform:skewX(-5deg) translateY(5px);box-shadow:inset 0 -5px #0b9a6438,0 4px 0 #173c35}
+    .controls{margin-top:18px;color:#91a4ca;font-size:12px;font-weight:800;letter-spacing:.04em}
+    .forms{display:flex;justify-content:center;gap:9px;margin:0 auto 20px}
+    .form{min-width:116px;border:2px solid #ffffff35;border-radius:5px;padding:9px 13px;background:#07132dbb;color:#aebddd;font-weight:1000;font-size:12px;letter-spacing:.08em;cursor:pointer}
+    .form[aria-pressed="true"]{border-color:var(--cyan);background:linear-gradient(135deg,#143a62,#1b315b);color:#fff;box-shadow:0 0 18px #55efff55,inset 0 0 0 2px #ffffff12}
+    .form b{display:inline-grid;width:22px;height:22px;place-items:center;margin-right:7px;border:2px solid currentColor;vertical-align:middle}
+    .form[data-form="robot"] b{position:relative;height:17px;margin-bottom:7px;border-radius:4px 4px 7px 7px;font-size:0}
+    .form[data-form="robot"] b:before{content:"";position:absolute;left:3px;right:3px;top:4px;height:4px;background:currentColor;box-shadow:-3px 13px 0 1px currentColor,3px 13px 0 1px currentColor}
+    .form[data-form="robot"] b:after{content:"";position:absolute;left:-2px;right:-2px;bottom:-10px;height:5px;background:var(--lime);clip-path:polygon(0 25%,35% 0,46% 100%,54% 100%,65% 0,100% 25%,85% 100%,15% 100%)}
+    .flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:2}
+    .flash.go{animation:flash .3s ease-out}
+    @keyframes flash{0%{opacity:.78}100%{opacity:0}}
+    @media(max-width:600px){.hud{inset:10px 10px auto;grid-template-columns:54px 1fr 47px;gap:8px}.brand{font-size:10px}.coins{left:10px;top:40px}.card{padding:20px 16px}.controls{padding:0 76px}.play{min-width:180px;min-height:52px}}
+  </style>
+</head>
+<body>
+  <main class="game" aria-label="Geometry Bash game">
+    <canvas id="game" aria-label="Geometry Bash auto-running platform game. Press Space, Up Arrow, click, or tap to jump."></canvas>
+    <div class="hud" aria-live="polite"><div class="brand">BASH 67</div><div class="progress"><i id="bar"></i></div><div class="percent" id="percent">0%</div></div>
+    <div class="coins" id="coins">◆ 0 / 3</div>
+    <div class="flash" id="flash"></div>
+    <section class="overlay" id="overlay">
+      <div class="card">
+        <div class="eyebrow" id="eyebrow">Project 67 Arcade</div>
+        <h1 id="title">Geometry<br><span>Bash</span></h1>
+        <p class="message" id="message">Jump the spikes, ride the pads, grab all three secret coins, and survive one neon level to the finish.</p>
+        <div class="forms" id="forms" aria-label="Choose a playable form">
+          <button class="form" data-form="square" type="button" aria-pressed="true"><b>□</b>SQUARE</button>
+          <button class="form" data-form="robot" type="button" aria-pressed="false"><b>R</b>ROBOT</button>
+        </div>
+        <button class="play" id="play" type="button">PLAY LEVEL</button>
+        <div class="controls">SPACE / ↑ / CLICK / TAP · SQUARE JUMPS · ROBOT BOOSTS</div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+  (() => {
+    'use strict';
+    const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
+    const overlay=document.getElementById('overlay'),playBtn=document.getElementById('play');
+    const titleEl=document.getElementById('title'),messageEl=document.getElementById('message'),eyebrowEl=document.getElementById('eyebrow');
+    const bar=document.getElementById('bar'),percentEl=document.getElementById('percent'),coinsEl=document.getElementById('coins'),flash=document.getElementById('flash');
+    const WORLD_END=17100,START_X=260,SPEED=390,GRAVITY=2200,SQUARE_JUMP=-Math.sqrt(2*GRAVITY*42*3.5),ROBOT_TAKEOFF=-430,ROBOT_THRUST=2400,ROBOT_BURN=.52,ROBOT_FORWARD=105,ROBOT_DRIFT=430;
+    let W=960,H=540,dpr=1,ground=420,scale=1,last=0,state='menu',camera=0,shake=0,audio=null,selectedForm='square';
+    let player={x:START_X,y:0,vy:0,size:42,angle:0,onGround:true,dead:false,form:'square',jumpHold:0,boostCut:false};
+    let particles=[],collected=new Set(),held=false,best=Number(localStorage.getItem('geometry-bash-best')||0),attempt=0;
+    const solids=[],spikes=[],pads=[],coins=[{x:4780,y:-138,id:0},{x:10170,y:-175,id:1},{x:15080,y:-138,id:2}];
+
+    function block(x,w=70,h=70){solids.push({x,w,h});}
+    function spike(x,count=1,base=0){for(let i=0;i<count;i++)spikes.push({x:x+i*46,w:42,h:44,base});}
+    function pad(x,power=1030){pads.push({x,w:56,power});}
+    // A hand-built level: readable opening, syncopated middle, and a quick final run.
+    spike(920,1); spike(1350,2); block(1820,90,70); spike(1930,1); spike(2340,3);
+    block(2900,190,70); spike(3150,2); pad(3530,1200); spike(3690,4); block(4030,160,105); spike(4250,2);
+    block(4650,170,105); spike(4890,2); block(5200,70,70); block(5270,70,140); spike(5440,3);
+    pad(5830,1070); spike(5970,5); block(6250,210,105); spike(6500,1); spike(6790,3);
+    block(7200,80,70); block(7280,80,140); block(7360,80,210); spike(7590,2); pad(7900,980); spike(8010,4);
+    block(8340,260,70); spike(8690,1); block(8960,80,70); spike(9095,2); block(9350,210,105);
+    spike(9630,3); block(10020,230,140); spike(10310,1); pad(10600,1050); spike(10730,5);
+    block(11150,80,70); block(11230,80,140); spike(11410,2); block(11740,180,105); spike(11980,3);
+    spike(12420,1); spike(12620,1); spike(12820,1); pad(13120,1030); spike(13240,5); block(13610,250,70);
+    spike(13940,3); block(14340,80,70); block(14420,80,140); block(14500,80,210); spike(14710,3);
+    block(15000,180,105); spike(15240,2); pad(15550,1050); spike(15680,5); block(16060,220,105); spike(16360,3);
+
+    function resize(){
+      const r=canvas.getBoundingClientRect();dpr=Math.min(devicePixelRatio||1,2);W=Math.max(1,r.width);H=Math.max(1,r.height);
+      canvas.width=Math.round(W*dpr);canvas.height=Math.round(H*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);
+      scale=Math.max(.74,Math.min(1.18,H/590));ground=H-Math.max(78,Math.min(130,H*.2));
+      if(state==='menu')player.y=ground-player.size*scale;
+    }
+    addEventListener('resize',resize);resize();
+
+    function tone(freq,duration=.08,type='square',gain=.04){
+      try{audio ||= new (AudioContext||webkitAudioContext)(); const o=audio.createOscillator(),g=audio.createGain();o.type=type;o.frequency.value=freq;g.gain.setValueAtTime(gain,audio.currentTime);g.gain.exponentialRampToValueAtTime(.001,audio.currentTime+duration);o.connect(g).connect(audio.destination);o.start();o.stop(audio.currentTime+duration);}catch{}
+    }
+    function burst(x,y,color,n=12,speed=210){for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2,v=Math.random()*speed;particles.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v-60,life:.45+Math.random()*.35,color,size:3+Math.random()*6});}}
+    function start(){
+      state='playing';attempt++;camera=0;held=false;collected.clear();particles=[];shake=0;
+      player={x:START_X,y:ground-42*scale,vy:0,size:42,angle:0,onGround:true,dead:false,form:selectedForm,jumpHold:0,boostCut:false};
+      overlay.hidden=true;bar.style.width='0%';percentEl.textContent='0%';coinsEl.textContent='◆ 0 / 3';last=performance.now();tone(360,.12,'square',.035);
+    }
+    function jump(){
+      if(state!=='playing')return;
+      held=true;
+      if(player.onGround){player.vy=(player.form==='robot'?ROBOT_TAKEOFF:SQUARE_JUMP)*scale;player.jumpHold=0;player.boostCut=false;player.onGround=false;tone(player.form==='robot'?430:520,.055,'square',.025);burst(player.x-camera,player.y+player.size*scale,'#55efff',5,90);}
+    }
+    function release(){held=false;if(player.form==='robot'&&!player.onGround){player.boostCut=true;player.vy=Math.max(player.vy,150*scale);}}
+    function die(){
+      if(state!=='playing'||player.dead)return;player.dead=true;state='dead';shake=13;burst(player.x-camera,player.y,'#ff4fa3',30,360);tone(95,.28,'sawtooth',.075);
+      const progress=Math.min(100,Math.floor((player.x-START_X)/(WORLD_END-START_X)*100));best=Math.max(best,progress);localStorage.setItem('geometry-bash-best',best);
+      setTimeout(()=>{eyebrowEl.textContent=`Attempt ${attempt} · Best ${best}%`;titleEl.innerHTML='CRASHED<br><span>'+progress+'%</span>';messageEl.textContent=`You found ${collected.size} of 3 coins. Hit retry and learn the pattern.`;playBtn.textContent='RETRY';overlay.hidden=false;},520);
+    }
+    function win(){
+      state='won';best=100;localStorage.setItem('geometry-bash-best','100');tone(660,.12,'square',.05);setTimeout(()=>tone(880,.2,'square',.05),110);flash.classList.remove('go');void flash.offsetWidth;flash.classList.add('go');
+      setTimeout(()=>{eyebrowEl.textContent=`Level complete · Attempt ${attempt}`;titleEl.innerHTML='BASH<br><span>COMPLETE!</span>';messageEl.textContent=`100% cleared with ${collected.size} of 3 secret coins. Your run is saved.`;playBtn.textContent='PLAY AGAIN';overlay.hidden=false;},450);
+    }
+
+    function overlap(a,b){return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;}
+    function update(dt){
+      particles.forEach(p=>{p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=650*dt;p.life-=dt});particles=particles.filter(p=>p.life>0);
+      if(shake>0)shake=Math.max(0,shake-dt*32);
+      if(state!=='playing')return;
+      const boosting=player.form==='robot'&&held&&!player.boostCut&&!player.onGround&&player.jumpHold<ROBOT_BURN;
+      player.x+=(SPEED+(boosting?ROBOT_FORWARD:0))*dt;
+      if(boosting){player.vy-=ROBOT_THRUST*scale*dt;player.jumpHold+=dt;}
+      const gravity=GRAVITY*scale;player.y+=player.vy*dt+.5*gravity*dt*dt;player.vy+=gravity*dt;if(player.form==='robot'&&player.boostCut)player.vy=Math.min(player.vy,ROBOT_DRIFT*scale);if(player.form==='robot')player.angle=boosting?-.12:0;else player.angle+=dt*(player.onGround?0:6.6);
+      player.onGround=false;const size=player.size*scale;const prevBottom=player.y-player.vy*dt+size;
+      let floorY=ground;
+      for(const s of solids){if(player.x+size>s.x&&player.x<s.x+s.w&&prevBottom<=ground-s.h+10&&player.y+size>=ground-s.h){floorY=Math.min(floorY,ground-s.h);}}
+      if(player.y+size>=floorY&&player.vy>=0){player.y=floorY-size;player.vy=0;player.onGround=true;player.angle=player.form==='robot'?0:Math.round(player.angle/(Math.PI/2))*(Math.PI/2);if(held)jump();}
+      const hitbox={x:player.x+7*scale,y:player.y+7*scale,w:size-14*scale,h:size-14*scale};
+      for(const s of solids){const rect={x:s.x,y:ground-s.h,w:s.w,h:s.h};if(overlap(hitbox,rect)&&player.y+size>ground-s.h+13)die();}
+      for(const s of spikes){const rect={x:s.x+8,y:ground-s.base-s.h+10,w:s.w-16,h:s.h-10};if(overlap(hitbox,rect))die();}
+      for(const p of pads){if(player.x+size>p.x&&player.x<p.x+p.w&&player.y+size>=ground-9&&player.vy>=0){player.vy=-p.power*scale;player.onGround=false;tone(740,.09,'square',.035);burst(p.x-camera,ground,'#c8ff38',12,170);}}
+      for(const c of coins){if(collected.has(c.id))continue;const cy=ground+c.y*scale;if(Math.hypot(player.x+size/2-c.x,player.y+size/2-cy)<43*scale){collected.add(c.id);coinsEl.textContent=`◆ ${collected.size} / 3`;tone(960,.13,'sine',.05);burst(c.x-camera,cy,'#ffd84d',18,240);}}
+      camera=Math.max(0,player.x-W*.25);const progress=Math.min(100,Math.max(0,(player.x-START_X)/(WORLD_END-START_X)*100));bar.style.width=progress+'%';percentEl.textContent=Math.floor(progress)+'%';document.documentElement.dataset.playerForm=player.form;document.documentElement.dataset.jumpHeightBlocks=((ground-size-player.y)/size).toFixed(3);document.documentElement.dataset.verticalSpeedBlocks=(player.vy/size).toFixed(3);document.documentElement.dataset.playerX=player.x.toFixed(2);document.documentElement.dataset.boosting=String(boosting);
+      if(player.y>H+100)die();if(player.x>=WORLD_END)win();
+    }
+
+    function poly(points,fill,stroke=null,line=2){ctx.beginPath();points.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.closePath();ctx.fillStyle=fill;ctx.fill();if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=line;ctx.stroke();}}
+    function draw(){
+      ctx.save();const sx=shake?(Math.random()-.5)*shake:0,sy=shake?(Math.random()-.5)*shake:0;ctx.translate(sx,sy);
+      const hue=(camera*.012)%360;
+      const grad=ctx.createLinearGradient(0,0,0,H);grad.addColorStop(0,`hsl(${220+hue*.03} 70% 20%)`);grad.addColorStop(.65,'#091b3d');grad.addColorStop(1,'#061025');ctx.fillStyle=grad;ctx.fillRect(-20,-20,W+40,H+40);
+      // rhythmic geometric background
+      ctx.globalAlpha=.18;ctx.strokeStyle='#69ddff';ctx.lineWidth=1;
+      const grid=64*scale,offset=-(camera*.22)%grid;for(let x=offset;x<W;x+=grid){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke()}for(let y=ground%grid;y>0;y-=grid){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}
+      ctx.globalAlpha=.16;for(let i=0;i<7;i++){const x=((i*223-camera*.13)%(W+280)+W+280)%(W+280)-100,y=70+(i%3)*88;ctx.save();ctx.translate(x,y);ctx.rotate(Math.PI/4);ctx.strokeStyle=i%2?'#ff4fa3':'#c8ff38';ctx.lineWidth=5;ctx.strokeRect(-24,-24,48,48);ctx.restore()}
+      ctx.globalAlpha=1;
+      // ground
+      ctx.fillStyle='#08142a';ctx.fillRect(0,ground,W,H-ground);ctx.fillStyle='#55efff';ctx.fillRect(0,ground, W,4);ctx.globalAlpha=.2;for(let x=-(camera%48);x<W;x+=48){ctx.strokeStyle='#55efff';ctx.strokeRect(x,ground+4,48,48)}ctx.globalAlpha=1;
+      ctx.save();ctx.translate(-camera,0);
+      for(const s of solids){const y=ground-s.h;ctx.fillStyle='#152d62';ctx.fillRect(s.x,y,s.w,s.h);ctx.strokeStyle='#55efff';ctx.lineWidth=4;ctx.strokeRect(s.x+2,y+2,s.w-4,s.h-4);ctx.fillStyle='#ffffff12';for(let xx=s.x+12;xx<s.x+s.w;xx+=34)ctx.fillRect(xx,y+12,12,s.h-24)}
+      for(const s of spikes){const y=ground-s.base;poly([[s.x,y],[s.x+s.w/2,y-s.h],[s.x+s.w,y]],'#ff4fa3','#ff9bce',3)}
+      for(const p of pads){ctx.fillStyle='#b9ff38';ctx.fillRect(p.x,ground-9,p.w,9);ctx.shadowColor='#c8ff38';ctx.shadowBlur=18;ctx.fillRect(p.x+7,ground-13,p.w-14,5);ctx.shadowBlur=0}
+      for(const c of coins){if(collected.has(c.id))continue;const y=ground+c.y*scale;ctx.save();ctx.translate(c.x,y);ctx.rotate(performance.now()/700);ctx.shadowColor='#ffd84d';ctx.shadowBlur=18;poly([[0,-19],[15,-9],[15,9],[0,19],[-15,9],[-15,-9]],'#ffd84d','#fff2a8',3);ctx.fillStyle='#815600';ctx.font='900 13px Arial';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('67',0,1);ctx.restore()}
+      ctx.restore();
+      // player is screen-relative
+      const px=player.x-camera,ps=player.size*scale;ctx.save();ctx.translate(px+ps/2,player.y+ps/2);ctx.rotate(player.angle);ctx.shadowColor='#55efff';ctx.shadowBlur=20;ctx.fillStyle=player.dead?'#ff4fa3':'#c8ff38';
+      if(player.form==='robot'){
+        // Geometry Bash robot: compact armored head, jointed legs, and oversized rocket boots.
+        poly([[-ps*.44,-ps*.46],[ps*.36,-ps*.46],[ps*.46,-ps*.34],[ps*.42,ps*.04],[ps*.25,ps*.17],[-ps*.27,ps*.17],[-ps*.44,ps*.04]],player.dead?'#ff4fa3':'#c8ff38','#f8fbff',3);
+        ctx.shadowBlur=0;ctx.fillStyle='#09152e';ctx.fillRect(-ps*.27,-ps*.26,ps*.16,ps*.15);ctx.fillRect(ps*.10,-ps*.26,ps*.16,ps*.15);ctx.fillStyle='#f8fbff';ctx.fillRect(-ps*.22,ps*.01,ps*.12,ps*.08);ctx.fillRect(-ps*.04,ps*.01,ps*.12,ps*.08);ctx.fillRect(ps*.14,ps*.01,ps*.12,ps*.08);
+        const run=Math.sin(performance.now()/65)*ps*.12,air=player.onGround?0:ps*.08;
+        ctx.strokeStyle=player.dead?'#ff4fa3':'#c8ff38';ctx.lineWidth=ps*.13;ctx.lineCap='square';ctx.beginPath();ctx.moveTo(-ps*.22,ps*.12);ctx.lineTo(-ps*.25-run-air,ps*.30);ctx.moveTo(ps*.22,ps*.12);ctx.lineTo(ps*.25+run+air,ps*.30);ctx.stroke();
+        const left=-ps*.27-run-air,right=ps*.27+run+air,bootY=ps*.31;
+        const bootColor=player.dead?'#ff718f':'#ff4fa3';ctx.fillStyle=bootColor;ctx.strokeStyle='#f8fbff';ctx.lineWidth=2.5;
+        poly([[left-ps*.21,bootY],[left+ps*.11,bootY-ps*.06],[left+ps*.24,bootY+ps*.12],[left+ps*.15,bootY+ps*.29],[left-ps*.23,bootY+ps*.29],[left-ps*.29,bootY+ps*.14]],bootColor,'#f8fbff',2.5);
+        poly([[right-ps*.11,bootY-ps*.06],[right+ps*.21,bootY],[right+ps*.29,bootY+ps*.14],[right+ps*.23,bootY+ps*.29],[right-ps*.15,bootY+ps*.29],[right-ps*.24,bootY+ps*.12]],bootColor,'#f8fbff',2.5);
+        ctx.fillStyle='#172342';ctx.fillRect(left-ps*.12,bootY+ps*.18,ps*.23,ps*.07);ctx.fillRect(right-ps*.11,bootY+ps*.18,ps*.23,ps*.07);
+        if(held&&!player.boostCut&&!player.onGround&&player.jumpHold<ROBOT_BURN){const flame=.28+.10*Math.sin(performance.now()/45);ctx.shadowColor='#55efff';ctx.shadowBlur=18;poly([[left-ps*.12,bootY+ps*.28],[left,bootY+ps*(.28+flame)],[left+ps*.12,bootY+ps*.28]],'#55efff','#f8fbff',1.5);poly([[right-ps*.12,bootY+ps*.28],[right,bootY+ps*(.28+flame)],[right+ps*.12,bootY+ps*.28]],'#55efff','#f8fbff',1.5);ctx.globalAlpha=.7;ctx.fillStyle='#ffda4d';ctx.fillRect(left-ps*.05,bootY+ps*(.36+flame),ps*.10,ps*.10);ctx.fillRect(right-ps*.05,bootY+ps*(.36+flame*.75),ps*.10,ps*.10);ctx.globalAlpha=1;ctx.shadowBlur=0;}
+      }else{
+        ctx.fillRect(-ps/2,-ps/2,ps,ps);ctx.shadowBlur=0;ctx.strokeStyle='#f8fbff';ctx.lineWidth=3;ctx.strokeRect(-ps/2+2,-ps/2+2,ps-4,ps-4);ctx.fillStyle='#09152e';ctx.fillRect(-ps*.27,-ps*.18,ps*.16,ps*.18);ctx.fillRect(ps*.11,-ps*.18,ps*.16,ps*.18);ctx.fillRect(-ps*.22,ps*.14,ps*.44,ps*.1);
+      }ctx.restore();
+      for(const p of particles){ctx.globalAlpha=Math.max(0,p.life*1.5);ctx.fillStyle=p.color;ctx.fillRect(p.x-p.size/2,p.y-p.size/2,p.size,p.size)}ctx.globalAlpha=1;
+      ctx.restore();
+    }
+    function loop(now){const dt=Math.min(.032,(now-last)/1000||0);last=now;update(dt);draw();requestAnimationFrame(loop)}
+    playBtn.addEventListener('click',start);
+    document.querySelectorAll('.form').forEach(button=>button.addEventListener('click',()=>{selectedForm=button.dataset.form;document.querySelectorAll('.form').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));tone(selectedForm==='robot'?430:520,.06,'square',.025)}));
+    addEventListener('keydown',e=>{if((e.code==='Space'||e.code==='ArrowUp')&&!e.repeat){e.preventDefault();if(state==='menu'||state==='dead'||state==='won')start();else jump();}});
+    addEventListener('keyup',e=>{if(e.code==='Space'||e.code==='ArrowUp')release()});
+    canvas.addEventListener('pointerdown',e=>{e.preventDefault();jump()});canvas.addEventListener('pointerup',release);canvas.addEventListener('pointercancel',release);
+    document.addEventListener('visibilitychange',()=>{held=false;last=performance.now()});
+    window.GeometryBashDebug={getState:()=>({form:player.form,onGround:player.onGround,held,boostCut:player.boostCut,jumpHold:player.jumpHold,jumpHeightBlocks:(ground-player.size*scale-player.y)/(player.size*scale),squareJumpBlocks:3.5})};
+    requestAnimationFrame(loop);
+  })();
+  </script>
+  <script src="arcade_keybinds.js?v=4"></script>
+  <script src="cat_button.js?v=2"></script>
+</body>
+</html>
