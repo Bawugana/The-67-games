@@ -63,7 +63,8 @@
 
     .shell {
       width: min(1120px, 100%);
-      min-height: min(760px, calc(100vh - 36px));
+      height: min(760px, calc(100vh - 36px));
+      min-height: 0;
       display: grid;
       grid-template-columns: minmax(280px, 0.85fr) minmax(360px, 1.15fr);
       border: 1px solid var(--line);
@@ -245,9 +246,24 @@
 
     .stage {
       min-width: 0;
+      min-height: 0;
       display: grid;
-      grid-template-rows: auto 1fr auto;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      overflow: hidden;
       background: rgba(24, 26, 30, 0.5);
+    }
+
+    .visual::-webkit-scrollbar {
+      width: 9px;
+    }
+
+    .visual::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .visual::-webkit-scrollbar-thumb {
+      border-radius: 8px;
+      background: var(--green);
     }
 
     .stage-header {
@@ -265,10 +281,12 @@
     }
 
     .visual {
-      display: grid;
-      grid-template-rows: minmax(0, 1fr) auto;
-      align-items: center;
+      display: block;
       min-height: 0;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      scrollbar-color: var(--green) rgba(255, 255, 255, 0.06);
+      scrollbar-width: thin;
       padding: 26px;
     }
 
@@ -488,19 +506,27 @@
 
     .utility-row {
       display: grid;
-      grid-template-columns: minmax(150px, 1fr) auto;
+      grid-template-columns: minmax(150px, 1fr) minmax(180px, 1fr) auto;
       gap: 12px;
       align-items: center;
       margin-top: 14px;
     }
 
-    .volume {
+    .volume,
+    .playback-speed {
       display: grid;
-      grid-template-columns: 34px 1fr;
+      grid-template-columns: auto 1fr auto;
       gap: 8px;
       align-items: center;
       color: var(--muted);
       font-weight: 800;
+    }
+
+    .control-value {
+      min-width: 40px;
+      color: var(--muted);
+      font-size: 12px;
+      text-align: right;
     }
 
     .hint {
@@ -515,7 +541,8 @@
       }
 
       .shell {
-        min-height: 100vh;
+        height: 100vh;
+        min-height: 0;
         border: 0;
         border-radius: 0;
         grid-template-columns: 1fr;
@@ -633,6 +660,11 @@
             Vol
             <input id="volume" type="range" min="0" max="1" value="0.82" step="0.01" aria-label="Volume">
           </label>
+          <label class="playback-speed">
+            Speed
+            <input id="playbackSpeed" type="range" min="0.5" max="2" value="1" step="0.05" aria-label="Playback speed">
+            <output class="control-value" id="speedValue" for="playbackSpeed">1.00x</output>
+          </label>
           <p class="hint">Space plays. Arrow keys seek. N and B switch tracks.</p>
         </div>
         <div class="caption-tools">
@@ -677,6 +709,8 @@
     const elapsed = document.getElementById("elapsed");
     const remaining = document.getElementById("remaining");
     const volume = document.getElementById("volume");
+    const playbackSpeed = document.getElementById("playbackSpeed");
+    const speedValue = document.getElementById("speedValue");
     const playBtn = document.getElementById("playBtn");
     const prevBtn = document.getElementById("prevBtn");
     const nextBtn = document.getElementById("nextBtn");
@@ -1457,6 +1491,11 @@
       audio.volume = Number(volume.value);
     });
 
+    playbackSpeed.addEventListener("input", () => {
+      audio.playbackRate = Number(playbackSpeed.value);
+      speedValue.value = `${audio.playbackRate.toFixed(2)}x`;
+    });
+
     playBtn.addEventListener("click", togglePlay);
     prevBtn.addEventListener("click", previousTrack);
     nextBtn.addEventListener("click", nextTrack);
@@ -1486,10 +1525,11 @@
     });
 
     audio.volume = Number(volume.value);
+    audio.playbackRate = Number(playbackSpeed.value);
     setCover(null);
     updateQueue();
     loadStoredTracks();
     drawScope();
   </script>
-<script src="arcade_keybinds.js"></script><script src="mobile_joystick.js?v=2"></script></body>
+<script src="arcade_keybinds.js?v=6"></script><script src="mobile_joystick.js?v=2"></script></body>
 </html>
