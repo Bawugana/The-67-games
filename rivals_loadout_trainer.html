@@ -127,6 +127,11 @@
       display: none;
     }
 
+    body.hud-hidden #loadoutMakerPanel,
+    body.hud-hidden .training-panel {
+      display: none;
+    }
+
     .left-panel {
       left: 28px;
       top: 174px;
@@ -3900,6 +3905,7 @@
     function updateHud() {
       const acc = state.shots ? Math.round((state.hits / state.shots) * 100) : 100;
       hud.classList.toggle("hidden", state.hudHidden);
+      document.body.classList.toggle("hud-hidden", state.hudHidden);
       const moving = state.moving ? "<strong>moving</strong>" : "<span class='danger'>stopped</span>";
       const weaponList = weapons.map((weapon, index) => (
         index === state.weaponIndex ? `<strong>${index + 1}:${weapon.name}</strong>` : `${index + 1}:${weapon.name}`
@@ -4354,5 +4360,5 @@
     rebuildMobileWeaponButtons();
     requestAnimationFrame(tick);
   </script>
-<script src="arcade_keybinds.js"></script><script src="mobile_joystick.js?v=2"></script></body>
+<script src="arcade_keybinds.js?v=6"></script><script src="mobile_joystick.js?v=2"></script></body>
 </html>

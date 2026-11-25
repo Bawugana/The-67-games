@@ -71,27 +71,44 @@
     const overlay=document.getElementById('overlay'),playBtn=document.getElementById('play');
     const titleEl=document.getElementById('title'),messageEl=document.getElementById('message'),eyebrowEl=document.getElementById('eyebrow');
     const bar=document.getElementById('bar'),percentEl=document.getElementById('percent'),coinsEl=document.getElementById('coins'),flash=document.getElementById('flash');
-    const WORLD_END=17100,START_X=260,SPEED=390,GRAVITY=2200,SQUARE_JUMP=-Math.sqrt(2*GRAVITY*42*3.5),ROBOT_TAKEOFF=-430,ROBOT_THRUST=2400,ROBOT_BURN=.52,ROBOT_FORWARD=105,ROBOT_DRIFT=430;
-    let W=960,H=540,dpr=1,ground=420,scale=1,last=0,state='menu',camera=0,shake=0,audio=null,selectedForm='square';
+    const SQUARE_WORLD_END=17100,ROBOT_WORLD_END=12200,START_X=260,SPEED=390,GRAVITY=2200,SQUARE_JUMP=-Math.sqrt(2*GRAVITY*42*3.5),ROBOT_TAKEOFF=-430,ROBOT_THRUST=2400,ROBOT_BURN=.52,ROBOT_FORWARD=105,ROBOT_DRIFT=430;
+    let W=960,H=540,dpr=1,ground=420,scale=1,last=0,state='menu',camera=0,shake=0,audio=null,selectedForm='square',worldEnd=SQUARE_WORLD_END;
     let player={x:START_X,y:0,vy:0,size:42,angle:0,onGround:true,dead:false,form:'square',jumpHold:0,boostCut:false};
-    let particles=[],collected=new Set(),held=false,best=Number(localStorage.getItem('geometry-bash-best')||0),attempt=0;
-    const solids=[],spikes=[],pads=[],coins=[{x:4780,y:-138,id:0},{x:10170,y:-175,id:1},{x:15080,y:-138,id:2}];
+    let particles=[],collected=new Set(),held=false,best=Number(localStorage.getItem('geometry-bash-best-square')||0),attempt=0;
+    const solids=[],spikes=[],pads=[],coins=[];
 
     function block(x,w=70,h=70){solids.push({x,w,h});}
     function spike(x,count=1,base=0){for(let i=0;i<count;i++)spikes.push({x:x+i*46,w:42,h:44,base});}
     function pad(x,power=1030){pads.push({x,w:56,power});}
-    // A hand-built level: readable opening, syncopated middle, and a quick final run.
-    spike(920,1); spike(1350,2); block(1820,90,70); spike(1930,1); spike(2340,3);
-    block(2900,190,70); spike(3150,2); pad(3530,1200); spike(3690,4); block(4030,160,105); spike(4250,2);
-    block(4650,170,105); spike(4890,2); block(5200,70,70); block(5270,70,140); spike(5440,3);
-    pad(5830,1070); spike(5970,5); block(6250,210,105); spike(6500,1); spike(6790,3);
-    block(7200,80,70); block(7280,80,140); block(7360,80,210); spike(7590,2); pad(7900,980); spike(8010,4);
-    block(8340,260,70); spike(8690,1); block(8960,80,70); spike(9095,2); block(9350,210,105);
-    spike(9630,3); block(10020,230,140); spike(10310,1); pad(10600,1050); spike(10730,5);
-    block(11150,80,70); block(11230,80,140); spike(11410,2); block(11740,180,105); spike(11980,3);
-    spike(12420,1); spike(12620,1); spike(12820,1); pad(13120,1030); spike(13240,5); block(13610,250,70);
-    spike(13940,3); block(14340,80,70); block(14420,80,140); block(14500,80,210); spike(14710,3);
-    block(15000,180,105); spike(15240,2); pad(15550,1050); spike(15680,5); block(16060,220,105); spike(16360,3);
+    function buildSquareCourse(){
+      worldEnd=SQUARE_WORLD_END;coins.push({x:4780,y:-138,id:0},{x:10170,y:-175,id:1},{x:15080,y:-138,id:2});
+      spike(920,1); spike(1350,2); block(1820,90,70); spike(1930,1); spike(2340,3);
+      block(2900,190,70); spike(3150,2); pad(3530,1200); spike(3690,4); block(4030,160,105); spike(4250,2);
+      block(4650,170,105); spike(4890,2); block(5200,70,70); block(5270,70,140); spike(5440,3);
+      pad(5830,1450); spike(5970,5); block(6250,210,105); spike(6500,1); spike(6790,3);
+      block(7200,50,45); block(7250,50,85); block(7300,50,115); spike(7590,2); pad(7900,980); spike(8010,4);
+      block(8340,260,70); spike(8690,1); block(8960,80,70); spike(9095,2); block(9350,210,105);
+      spike(9630,3); block(10020,230,140); spike(10310,1); pad(10600,1050); spike(10730,5);
+      block(11150,80,70); block(11230,80,140); spike(11410,2); block(11740,180,105); spike(11980,3);
+      spike(12420,1); spike(12620,1); spike(12820,1); pad(13120,1030); spike(13240,5); block(13610,250,70);
+      spike(13940,3); block(14340,50,45); block(14390,50,85); block(14440,50,115); spike(14710,3);
+      block(15000,180,105); spike(15240,2); pad(15550,1050); spike(15680,5); block(16060,220,105); spike(16360,3);
+    }
+    function buildRobotCourse(){
+      worldEnd=ROBOT_WORLD_END;coins.push({x:2200,y:-185,id:0},{x:5800,y:-230,id:1},{x:9700,y:-200,id:2});
+      // Robot route: long booster lanes, airborne spike gates, and safe recharge platforms.
+      spike(980,3); block(1750,180,70); spike(2600,5); block(3450,220,105); spike(4300,6);
+      block(5200,300,105); spike(6200,6);
+      block(7100,260,105); spike(8000,7); block(9000,300,105);
+      spike(10000,6); block(10900,220,140); spike(11600,4);
+    }
+    function buildCourse(form){solids.length=0;spikes.length=0;pads.length=0;coins.length=0;(form==='robot'?buildRobotCourse:buildSquareCourse)();document.documentElement.dataset.course=form;}
+    function updateCourseCopy(){
+      const robot=selectedForm==='robot';
+      eyebrowEl.textContent=robot?'Robot Course · Booster Run':'Project 67 Arcade · Square Course';
+      messageEl.textContent=robot?'A separate booster course built for the Robot. Hold to climb, release to descend, and recharge on the platforms.':'Jump the spikes, ride the pads, grab all three secret coins, and survive one neon level to the finish.';
+    }
+    buildCourse('square');
 
     function resize(){
       const r=canvas.getBoundingClientRect();dpr=Math.min(devicePixelRatio||1,2);W=Math.max(1,r.width);H=Math.max(1,r.height);
@@ -107,6 +124,7 @@
     function burst(x,y,color,n=12,speed=210){for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2,v=Math.random()*speed;particles.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v-60,life:.45+Math.random()*.35,color,size:3+Math.random()*6});}}
     function start(){
       state='playing';attempt++;camera=0;held=false;collected.clear();particles=[];shake=0;
+      buildCourse(selectedForm);best=Number(localStorage.getItem('geometry-bash-best-'+selectedForm)||0);
       player={x:START_X,y:ground-42*scale,vy:0,size:42,angle:0,onGround:true,dead:false,form:selectedForm,jumpHold:0,boostCut:false};
       overlay.hidden=true;bar.style.width='0%';percentEl.textContent='0%';coinsEl.textContent='◆ 0 / 3';last=performance.now();tone(360,.12,'square',.035);
     }
@@ -115,14 +133,14 @@
       held=true;
       if(player.onGround){player.vy=(player.form==='robot'?ROBOT_TAKEOFF:SQUARE_JUMP)*scale;player.jumpHold=0;player.boostCut=false;player.onGround=false;tone(player.form==='robot'?430:520,.055,'square',.025);burst(player.x-camera,player.y+player.size*scale,'#55efff',5,90);}
     }
-    function release(){held=false;if(player.form==='robot'&&!player.onGround){player.boostCut=true;player.vy=Math.max(player.vy,150*scale);}}
+    function release(){held=false;if(player.form==='robot'&&!player.onGround)player.boostCut=true;}
     function die(){
       if(state!=='playing'||player.dead)return;player.dead=true;state='dead';shake=13;burst(player.x-camera,player.y,'#ff4fa3',30,360);tone(95,.28,'sawtooth',.075);
-      const progress=Math.min(100,Math.floor((player.x-START_X)/(WORLD_END-START_X)*100));best=Math.max(best,progress);localStorage.setItem('geometry-bash-best',best);
+      const progress=Math.min(100,Math.floor((player.x-START_X)/(worldEnd-START_X)*100));best=Math.max(best,progress);localStorage.setItem('geometry-bash-best-'+player.form,best);
       setTimeout(()=>{eyebrowEl.textContent=`Attempt ${attempt} · Best ${best}%`;titleEl.innerHTML='CRASHED<br><span>'+progress+'%</span>';messageEl.textContent=`You found ${collected.size} of 3 coins. Hit retry and learn the pattern.`;playBtn.textContent='RETRY';overlay.hidden=false;},520);
     }
     function win(){
-      state='won';best=100;localStorage.setItem('geometry-bash-best','100');tone(660,.12,'square',.05);setTimeout(()=>tone(880,.2,'square',.05),110);flash.classList.remove('go');void flash.offsetWidth;flash.classList.add('go');
+      state='won';best=100;localStorage.setItem('geometry-bash-best-'+player.form,'100');tone(660,.12,'square',.05);setTimeout(()=>tone(880,.2,'square',.05),110);flash.classList.remove('go');void flash.offsetWidth;flash.classList.add('go');
       setTimeout(()=>{eyebrowEl.textContent=`Level complete · Attempt ${attempt}`;titleEl.innerHTML='BASH<br><span>COMPLETE!</span>';messageEl.textContent=`100% cleared with ${collected.size} of 3 secret coins. Your run is saved.`;playBtn.textContent='PLAY AGAIN';overlay.hidden=false;},450);
     }
 
@@ -134,7 +152,9 @@
       const boosting=player.form==='robot'&&held&&!player.boostCut&&!player.onGround&&player.jumpHold<ROBOT_BURN;
       player.x+=(SPEED+(boosting?ROBOT_FORWARD:0))*dt;
       if(boosting){player.vy-=ROBOT_THRUST*scale*dt;player.jumpHold+=dt;}
-      const gravity=GRAVITY*scale;player.y+=player.vy*dt+.5*gravity*dt*dt;player.vy+=gravity*dt;if(player.form==='robot'&&player.boostCut)player.vy=Math.min(player.vy,ROBOT_DRIFT*scale);if(player.form==='robot')player.angle=boosting?-.12:0;else player.angle+=dt*(player.onGround?0:6.6);
+      const gravity=GRAVITY*scale,robotFalling=player.form==='robot'&&!boosting&&player.vy>=0;
+      if(robotFalling){player.vy=ROBOT_DRIFT*scale;player.y+=player.vy*dt;}else{player.y+=player.vy*dt+.5*gravity*dt*dt;player.vy+=gravity*dt;if(player.form==='robot'&&!boosting&&player.vy>0)player.vy=ROBOT_DRIFT*scale;}
+      if(player.form==='robot')player.angle=boosting?-.12:0;else player.angle+=dt*(player.onGround?0:6.6);
       player.onGround=false;const size=player.size*scale;const prevBottom=player.y-player.vy*dt+size;
       let floorY=ground;
       for(const s of solids){if(player.x+size>s.x&&player.x<s.x+s.w&&prevBottom<=ground-s.h+10&&player.y+size>=ground-s.h){floorY=Math.min(floorY,ground-s.h);}}
@@ -144,8 +164,8 @@
       for(const s of spikes){const rect={x:s.x+8,y:ground-s.base-s.h+10,w:s.w-16,h:s.h-10};if(overlap(hitbox,rect))die();}
       for(const p of pads){if(player.x+size>p.x&&player.x<p.x+p.w&&player.y+size>=ground-9&&player.vy>=0){player.vy=-p.power*scale;player.onGround=false;tone(740,.09,'square',.035);burst(p.x-camera,ground,'#c8ff38',12,170);}}
       for(const c of coins){if(collected.has(c.id))continue;const cy=ground+c.y*scale;if(Math.hypot(player.x+size/2-c.x,player.y+size/2-cy)<43*scale){collected.add(c.id);coinsEl.textContent=`◆ ${collected.size} / 3`;tone(960,.13,'sine',.05);burst(c.x-camera,cy,'#ffd84d',18,240);}}
-      camera=Math.max(0,player.x-W*.25);const progress=Math.min(100,Math.max(0,(player.x-START_X)/(WORLD_END-START_X)*100));bar.style.width=progress+'%';percentEl.textContent=Math.floor(progress)+'%';document.documentElement.dataset.playerForm=player.form;document.documentElement.dataset.jumpHeightBlocks=((ground-size-player.y)/size).toFixed(3);document.documentElement.dataset.verticalSpeedBlocks=(player.vy/size).toFixed(3);document.documentElement.dataset.playerX=player.x.toFixed(2);document.documentElement.dataset.boosting=String(boosting);
-      if(player.y>H+100)die();if(player.x>=WORLD_END)win();
+      camera=Math.max(0,player.x-W*.25);const progress=Math.min(100,Math.max(0,(player.x-START_X)/(worldEnd-START_X)*100));bar.style.width=progress+'%';percentEl.textContent=Math.floor(progress)+'%';document.documentElement.dataset.playerForm=player.form;document.documentElement.dataset.jumpHeightBlocks=((ground-size-player.y)/size).toFixed(3);document.documentElement.dataset.verticalSpeedBlocks=(player.vy/size).toFixed(3);document.documentElement.dataset.playerX=player.x.toFixed(2);document.documentElement.dataset.boosting=String(boosting);
+      if(player.y>H+100)die();if(player.x>=worldEnd)win();
     }
 
     function poly(points,fill,stroke=null,line=2){ctx.beginPath();points.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.closePath();ctx.fillStyle=fill;ctx.fill();if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=line;ctx.stroke();}}
@@ -188,16 +208,16 @@
     }
     function loop(now){const dt=Math.min(.032,(now-last)/1000||0);last=now;update(dt);draw();requestAnimationFrame(loop)}
     playBtn.addEventListener('click',start);
-    document.querySelectorAll('.form').forEach(button=>button.addEventListener('click',()=>{selectedForm=button.dataset.form;document.querySelectorAll('.form').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));tone(selectedForm==='robot'?430:520,.06,'square',.025)}));
+    document.querySelectorAll('.form').forEach(button=>button.addEventListener('click',()=>{selectedForm=button.dataset.form;document.querySelectorAll('.form').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));updateCourseCopy();tone(selectedForm==='robot'?430:520,.06,'square',.025)}));
     addEventListener('keydown',e=>{if((e.code==='Space'||e.code==='ArrowUp')&&!e.repeat){e.preventDefault();if(state==='menu'||state==='dead'||state==='won')start();else jump();}});
     addEventListener('keyup',e=>{if(e.code==='Space'||e.code==='ArrowUp')release()});
     canvas.addEventListener('pointerdown',e=>{e.preventDefault();jump()});canvas.addEventListener('pointerup',release);canvas.addEventListener('pointercancel',release);
     document.addEventListener('visibilitychange',()=>{held=false;last=performance.now()});
-    window.GeometryBashDebug={getState:()=>({form:player.form,onGround:player.onGround,held,boostCut:player.boostCut,jumpHold:player.jumpHold,jumpHeightBlocks:(ground-player.size*scale-player.y)/(player.size*scale),squareJumpBlocks:3.5})};
+    window.GeometryBashDebug={getState:()=>({form:player.form,course:document.documentElement.dataset.course,worldEnd,solidCount:solids.length,spikeCount:spikes.length,padCount:pads.length,coinCount:coins.length,onGround:player.onGround,held,boostCut:player.boostCut,jumpHold:player.jumpHold,jumpHeightBlocks:(ground-player.size*scale-player.y)/(player.size*scale),squareJumpBlocks:3.5})};
     requestAnimationFrame(loop);
   })();
   </script>
-  <script src="arcade_keybinds.js?v=4"></script>
+  <script src="arcade_keybinds.js?v=6"></script>
   <script src="cat_button.js?v=2"></script>
 </body>
 </html>
