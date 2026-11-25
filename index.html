@@ -439,6 +439,60 @@
       gap: 12px;
     }
 
+    .game-search {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      margin: 16px 0 12px;
+    }
+
+    .game-search input {
+      min-width: 0;
+      min-height: 52px;
+      border: 1px solid rgba(100, 210, 255, 0.52);
+      border-radius: 8px;
+      padding: 0 16px;
+      background: #0a0f16;
+      color: var(--ink);
+      font: inherit;
+      font-size: 16px;
+      font-weight: 800;
+      box-shadow: inset 0 1px rgba(255, 255, 255, 0.06);
+    }
+
+    .game-search input::placeholder {
+      color: var(--muted);
+    }
+
+    .game-search-clear {
+      min-width: 82px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--ink);
+      cursor: pointer;
+      font: inherit;
+      font-weight: 900;
+    }
+
+    .search-status {
+      min-height: 20px;
+      margin-bottom: 8px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .search-empty {
+      grid-column: 1 / -1;
+      border: 1px dashed var(--line);
+      border-radius: 8px;
+      padding: 40px 18px;
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.5;
+    }
+
     .game-card {
       min-height: 342px;
       display: grid;
@@ -663,6 +717,14 @@
         grid-template-columns: 1fr;
       }
 
+      .game-search {
+        grid-template-columns: 1fr;
+      }
+
+      .game-search-clear {
+        min-height: 46px;
+      }
+
       .game-card {
         min-height: 0;
       }
@@ -709,6 +771,11 @@
         <h2 id="libraryTitle">Launcher</h2>
         <p>Fifteen main games include animated how-to-play guides.</p>
       </div>
+      <div class="game-search" role="search">
+        <input id="gameSearch" type="search" placeholder="Search games…" autocomplete="off" aria-label="Search games">
+        <button class="game-search-clear" id="clearGameSearch" type="button">Clear</button>
+      </div>
+      <p class="search-status" id="searchStatus" aria-live="polite"></p>
       <div class="grid" id="gameGrid"></div>
     </section>
 
@@ -1090,6 +1157,9 @@
 
     const byId = Object.fromEntries(games.map(game => [game.id, game]));
     const grid = document.getElementById("gameGrid");
+    const gameSearch = document.getElementById("gameSearch");
+    const clearGameSearch = document.getElementById("clearGameSearch");
+    const searchStatus = document.getElementById("searchStatus");
     const recentList = document.getElementById("recentList");
     const clearRecent = document.getElementById("clearRecent");
     const leaderboardOverlay = document.getElementById("leaderboardOverlay");
@@ -1218,8 +1288,17 @@
       return tags.map(tag => `<span class="tag">${tag}</span>`).join("");
     }
 
-    function renderCards() {
-      grid.innerHTML = games.map(game => `
+    function renderCards(query = "") {
+      const term = query.trim().toLowerCase();
+      const visibleGames = term ? games.filter(game => [game.title, game.type, game.blurb, ...game.tags].join(" ").toLowerCase().includes(term)) : games;
+      searchStatus.textContent = term ? `${visibleGames.length} game${visibleGames.length === 1 ? "" : "s"} found` : `${games.length} games and tools`;
+
+      if (!visibleGames.length) {
+        grid.innerHTML = `<div class="search-empty">No games found for “${query.replace(/[<>&"']/g, "")}”. Try another word.</div>`;
+        return;
+      }
+
+      grid.innerHTML = visibleGames.map(game => `
         <article class="game-card" style="--accent:${game.accent}">
           <div class="card-top">
             <div class="card-icon" aria-hidden="true">${game.icon}</div>
@@ -1243,6 +1322,13 @@
         link.addEventListener("click", launch);
       });
     }
+
+    gameSearch.addEventListener("input", () => renderCards(gameSearch.value));
+    clearGameSearch.addEventListener("click", () => {
+      gameSearch.value = "";
+      renderCards();
+      gameSearch.focus();
+    });
 
     function renderRecent() {
       const recent = readRecent().slice(0, 3);
