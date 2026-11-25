@@ -117,7 +117,8 @@
       margin-top: 20px;
     }
 
-    .patch-notes-link {
+    .patch-notes-link,
+    .leaderboard-home-button {
       min-height: 46px;
       display: inline-grid;
       place-items: center;
@@ -132,10 +133,142 @@
       transition: transform 140ms ease, border-color 140ms ease, background 140ms ease;
     }
 
-    .patch-notes-link:hover {
+    .leaderboard-home-button {
+      border-color: rgba(122, 240, 166, 0.72);
+      background: linear-gradient(135deg, rgba(122, 240, 166, 0.3), rgba(100, 210, 255, 0.22));
+      color: var(--ink);
+      cursor: pointer;
+      font: inherit;
+      font-size: 14px;
+      font-weight: 900;
+      letter-spacing: 0.04em;
+    }
+
+    .patch-notes-link:hover,
+    .leaderboard-home-button:hover {
       transform: translateY(-2px);
       border-color: var(--yellow);
       background: linear-gradient(135deg, rgba(255, 209, 102, 0.3), rgba(100, 210, 255, 0.22));
+    }
+
+    .leaderboard-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 10000;
+      display: grid;
+      place-items: center;
+      padding: 18px;
+      background: rgba(4, 7, 12, 0.86);
+      backdrop-filter: blur(8px);
+    }
+
+    .leaderboard-overlay[hidden] {
+      display: none;
+    }
+
+    .leaderboard-dialog {
+      width: min(620px, 100%);
+      max-height: min(760px, 90vh);
+      overflow: auto;
+      border: 1px solid rgba(122, 240, 166, 0.55);
+      border-radius: 12px;
+      padding: 22px;
+      background: #10151d;
+      box-shadow: 0 28px 90px rgba(0, 0, 0, 0.65);
+    }
+
+    .leaderboard-dialog-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .leaderboard-dialog h2 {
+      font-size: clamp(26px, 6vw, 42px);
+    }
+
+    .leaderboard-close {
+      width: 42px;
+      height: 42px;
+      flex: 0 0 auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--ink);
+      cursor: pointer;
+      font-size: 22px;
+      font-weight: 900;
+    }
+
+    .leaderboard-picker {
+      display: grid;
+      gap: 8px;
+      margin: 20px 0 14px;
+      color: var(--soft);
+      font-size: 13px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .leaderboard-picker select {
+      width: 100%;
+      min-height: 48px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 0 12px;
+      background: #080c12;
+      color: var(--ink);
+      font: inherit;
+      font-weight: 800;
+    }
+
+    .leaderboard-mode {
+      margin-bottom: 12px;
+      color: var(--yellow);
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .leaderboard-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .leaderboard-row {
+      display: grid;
+      grid-template-columns: 44px minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 10px;
+      min-height: 48px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px 12px;
+      background: rgba(255, 255, 255, 0.035);
+    }
+
+    .leaderboard-rank,
+    .leaderboard-score {
+      color: var(--yellow);
+      font-weight: 900;
+    }
+
+    .leaderboard-name {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-weight: 800;
+    }
+
+    .leaderboard-empty {
+      border: 1px dashed var(--line);
+      border-radius: 8px;
+      padding: 28px 18px;
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.5;
     }
 
     .hero-badge {
@@ -548,6 +681,7 @@
         <h1 id="launcherTitle">Fresh games and tools, ready to launch.</h1>
         <p>Pick a card, jump in, and the launcher will remember what you played most recently on this device.</p>
         <div class="hero-actions">
+          <button class="leaderboard-home-button" id="openLeaderboard" type="button">🏆 LEADERBOARD</button>
           <a class="patch-notes-link" href="patch_notes.html">Patch Notes · Updated Weekly</a>
         </div>
       </div>
@@ -583,6 +717,24 @@
       <button class="reset" id="clearRecent" type="button">Clear recently played</button>
     </footer>
   </main>
+
+  <div class="leaderboard-overlay" id="leaderboardOverlay" hidden>
+    <section class="leaderboard-dialog" role="dialog" aria-modal="true" aria-labelledby="leaderboardTitle">
+      <div class="leaderboard-dialog-head">
+        <div>
+          <p class="kicker">Project 67 Scores</p>
+          <h2 id="leaderboardTitle">Leaderboard</h2>
+        </div>
+        <button class="leaderboard-close" id="closeLeaderboard" type="button" aria-label="Close leaderboard">×</button>
+      </div>
+      <label class="leaderboard-picker" for="leaderboardGameSelect">
+        Select a game
+        <select id="leaderboardGameSelect"></select>
+      </label>
+      <p class="leaderboard-mode" id="leaderboardMode"></p>
+      <div class="leaderboard-list" id="leaderboardList" aria-live="polite"></div>
+    </section>
+  </div>
 
   <script>
     const storageKey = "project67-recently-played";
@@ -940,6 +1092,91 @@
     const grid = document.getElementById("gameGrid");
     const recentList = document.getElementById("recentList");
     const clearRecent = document.getElementById("clearRecent");
+    const leaderboardOverlay = document.getElementById("leaderboardOverlay");
+    const openLeaderboard = document.getElementById("openLeaderboard");
+    const closeLeaderboard = document.getElementById("closeLeaderboard");
+    const leaderboardGameSelect = document.getElementById("leaderboardGameSelect");
+    const leaderboardMode = document.getElementById("leaderboardMode");
+    const leaderboardList = document.getElementById("leaderboardList");
+    const lowerScoreWins = new Set(["slide_nine.html", "tic_tac_67.html"]);
+    const rankedGames = games.filter(game => game.file.endsWith(".html") && game.file !== "music_player.html");
+
+    rankedGames.forEach(game => {
+      const option = document.createElement("option");
+      option.value = game.file;
+      option.textContent = game.title;
+      leaderboardGameSelect.appendChild(option);
+    });
+
+    function readLeaderboard(file) {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(`project67-leaderboard:${file}`) || "[]");
+        if (!Array.isArray(parsed)) return [];
+        const valid = parsed.filter(entry => entry && Number.isFinite(Number(entry.score)));
+        const direction = lowerScoreWins.has(file) ? 1 : -1;
+        return valid.sort((a, b) => (Number(a.score) - Number(b.score)) * direction).slice(0, 10);
+      } catch {
+        return [];
+      }
+    }
+
+    function renderLeaderboard() {
+      const file = leaderboardGameSelect.value;
+      const entries = readLeaderboard(file);
+      leaderboardMode.textContent = lowerScoreWins.has(file) ? "Lowest score wins" : "Highest score wins";
+      leaderboardList.replaceChildren();
+
+      if (!entries.length) {
+        const empty = document.createElement("div");
+        empty.className = "leaderboard-empty";
+        empty.textContent = "No saved scores for this game yet. Play it, open Scores, and save your score!";
+        leaderboardList.appendChild(empty);
+        return;
+      }
+
+      entries.forEach((entry, index) => {
+        const row = document.createElement("div");
+        row.className = "leaderboard-row";
+
+        const rank = document.createElement("span");
+        rank.className = "leaderboard-rank";
+        rank.textContent = `#${index + 1}`;
+
+        const name = document.createElement("span");
+        name.className = "leaderboard-name";
+        name.textContent = String(entry.name || "Player").slice(0, 24);
+
+        const score = document.createElement("span");
+        score.className = "leaderboard-score";
+        score.textContent = String(entry.score);
+
+        row.append(rank, name, score);
+        leaderboardList.appendChild(row);
+      });
+    }
+
+    function showLeaderboard() {
+      renderLeaderboard();
+      leaderboardOverlay.hidden = false;
+      document.body.style.overflow = "hidden";
+      leaderboardGameSelect.focus();
+    }
+
+    function hideLeaderboard() {
+      leaderboardOverlay.hidden = true;
+      document.body.style.overflow = "";
+      openLeaderboard.focus();
+    }
+
+    openLeaderboard.addEventListener("click", showLeaderboard);
+    closeLeaderboard.addEventListener("click", hideLeaderboard);
+    leaderboardGameSelect.addEventListener("change", renderLeaderboard);
+    leaderboardOverlay.addEventListener("click", event => {
+      if (event.target === leaderboardOverlay) hideLeaderboard();
+    });
+    document.addEventListener("keydown", event => {
+      if (event.key === "Escape" && !leaderboardOverlay.hidden) hideLeaderboard();
+    });
 
     function readRecent() {
       try {
