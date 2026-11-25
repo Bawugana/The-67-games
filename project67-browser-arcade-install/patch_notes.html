@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101114">
+  <title>Patch Notes · Project 67 Arcade</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #101114;
+      --ink: #f8fbff;
+      --muted: #aeb8c6;
+      --soft: #dde4ea;
+      --panel: rgba(20, 23, 28, 0.9);
+      --line: rgba(255, 255, 255, 0.15);
+      --yellow: #ffd166;
+      --green: #7af0a6;
+      --cyan: #64d2ff;
+      --pink: #ff78a5;
+      --shadow: 0 24px 70px rgba(0, 0, 0, 0.36);
+    }
+
+    * { box-sizing: border-box; }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      background:
+        radial-gradient(circle at 12% 10%, rgba(100, 210, 255, 0.18), transparent 24%),
+        radial-gradient(circle at 88% 7%, rgba(255, 209, 102, 0.15), transparent 23%),
+        radial-gradient(circle at 47% 100%, rgba(122, 240, 166, 0.12), transparent 30%),
+        linear-gradient(180deg, #15171d 0%, var(--bg) 62%, #0b0d11 100%);
+      color: var(--ink);
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    body { padding: clamp(14px, 3vw, 32px); }
+    a { color: inherit; text-decoration: none; }
+
+    .shell {
+      width: min(920px, 100%);
+      margin: 0 auto;
+      display: grid;
+      gap: 18px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+    }
+
+    .home {
+      min-height: 46px;
+      display: inline-grid;
+      place-items: center;
+      border: 1px solid rgba(100, 210, 255, 0.5);
+      border-radius: 8px;
+      padding: 0 15px;
+      background: rgba(20, 23, 28, 0.86);
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .weekly {
+      color: var(--green);
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .hero,
+    .patch {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    .hero {
+      padding: clamp(22px, 5vw, 42px);
+      background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.1), transparent 42%),
+        linear-gradient(100deg, rgba(255, 120, 165, 0.13), transparent 36%),
+        var(--panel);
+    }
+
+    .kicker {
+      margin: 0 0 10px;
+      color: var(--yellow);
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    h1,
+    h2,
+    h3,
+    p { margin: 0; }
+
+    h1 {
+      font-size: clamp(44px, 9vw, 76px);
+      line-height: 0.94;
+    }
+
+    .intro {
+      max-width: 650px;
+      margin-top: 16px;
+      color: var(--soft);
+      font-size: clamp(15px, 2vw, 18px);
+      line-height: 1.5;
+    }
+
+    .patch {
+      display: grid;
+      grid-template-columns: 150px minmax(0, 1fr);
+      overflow: hidden;
+    }
+
+    .patch-date {
+      padding: 22px;
+      background: linear-gradient(150deg, rgba(100, 210, 255, 0.2), rgba(122, 240, 166, 0.08));
+      border-right: 1px solid var(--line);
+    }
+
+    .patch-date time {
+      display: block;
+      color: var(--cyan);
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .version {
+      display: inline-block;
+      margin-top: 12px;
+      border-radius: 999px;
+      padding: 5px 9px;
+      background: var(--yellow);
+      color: #101114;
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .patch-body { padding: clamp(22px, 4vw, 32px); }
+
+    .patch-body h2 {
+      font-size: clamp(24px, 5vw, 34px);
+      line-height: 1.05;
+    }
+
+    .summary {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .changes {
+      display: grid;
+      gap: 10px;
+      margin: 20px 0 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .changes li {
+      position: relative;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 13px 14px 13px 42px;
+      background: rgba(255, 255, 255, 0.035);
+      color: var(--soft);
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .changes li::before {
+      content: "67";
+      position: absolute;
+      left: 12px;
+      top: 13px;
+      color: var(--green);
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .changes strong { color: var(--ink); }
+
+    .coming-next {
+      border: 1px dashed rgba(255, 209, 102, 0.45);
+      border-radius: 8px;
+      padding: 18px;
+      background: rgba(255, 209, 102, 0.06);
+    }
+
+    .coming-next h2 { font-size: 18px; }
+    .coming-next p {
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .home:hover,
+    .home:focus-visible {
+      border-color: var(--yellow);
+      outline: 3px solid rgba(255, 209, 102, 0.25);
+      outline-offset: 3px;
+    }
+
+    @media (max-width: 620px) {
+      body { padding: 10px; }
+      .topbar { align-items: flex-start; }
+      .weekly { max-width: 150px; text-align: right; line-height: 1.35; }
+      .patch { grid-template-columns: 1fr; }
+      .patch-date { border-right: 0; border-bottom: 1px solid var(--line); }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <nav class="topbar" aria-label="Patch notes navigation">
+      <a class="home" href="index.html">← Back to Arcade</a>
+      <span class="weekly">New notes every week</span>
+    </nav>
+
+    <header class="hero">
+      <p class="kicker">Project 67 Arcade</p>
+      <h1>Patch Notes</h1>
+      <p class="intro">See what changed across the arcade each week—new games, gameplay improvements, fixes, and quality-of-life updates.</p>
+    </header>
+
+    <article class="patch">
+      <div class="patch-date">
+        <time datetime="2026-11-24">November 24, 2026</time>
+        <span class="version">Weekly Update 02</span>
+      </div>
+      <div class="patch-body">
+        <h2>Leaderboards, search, and mobile upgrades</h2>
+        <p class="summary">This update makes the arcade easier to browse, improves phone controls, and gives every playable game a place to save scores on the device.</p>
+        <ul class="changes">
+          <li><strong>Homepage leaderboard:</strong> use the new LEADERBOARD button, select a game, and view its top 10 saved scores.</li>
+          <li><strong>Correct score rules:</strong> each leaderboard says whether the highest or lowest score wins, including special rules for Slide Nine and Tic Tac 67.</li>
+          <li><strong>Game search:</strong> search the launcher instantly by game name, type, description, or control tag.</li>
+          <li><strong>Mobile multitouch:</strong> supported games can move and aim at the same time, with joysticks for directional controls and cat buttons for one-key games.</li>
+          <li><strong>Shared game bar:</strong> Home, Controls, Reload, Scores, and FPS information stay easy to reach.</li>
+          <li><strong>Balance Beam made easier:</strong> the challenge is now 20 seconds with less random drift, stronger controls, gentler recovery, and a wider safe edge.</li>
+          <li><strong>Arcade download refreshed:</strong> the offline file version contains the same homepage and gameplay updates.</li>
+        </ul>
+      </div>
+    </article>
+
+    <article class="patch">
+      <div class="patch-date">
+        <time datetime="2026-10-25">October 25, 2026</time>
+        <span class="version">Weekly Update 01</span>
+      </div>
+      <div class="patch-body">
+        <h2>The arcade keeps growing</h2>
+        <p class="summary">This week focuses on a clearer launcher, more useful game controls, and polish across the main games and minigames.</p>
+        <ul class="changes">
+          <li><strong>Patch Notes added:</strong> this new page will track the arcade's weekly updates.</li>
+          <li><strong>Expanded minigame shelf:</strong> the launcher now includes 30 clearly labeled minigames with varied challenges.</li>
+          <li><strong>Better game navigation:</strong> shared top bars keep Home, Reload, custom controls, and FPS information within reach.</li>
+          <li><strong>Mobile control polish:</strong> movement games use joysticks while tap-only games keep controls that match their gameplay.</li>
+          <li><strong>Minefield Mini hints:</strong> players can reveal up to three safe tiles when they get stuck.</li>
+          <li><strong>Rivals HUD cleanup:</strong> hiding the HUD now also hides the loadout picker and training options for a clearer view of the arena.</li>
+        </ul>
+      </div>
+    </article>
+
+    <section class="coming-next" aria-labelledby="nextTitle">
+      <h2 id="nextTitle">Come back next week</h2>
+      <p>The newest update will always appear first, with older notes kept below it as the arcade's update history grows.</p>
+    </section>
+  </main>
+</body>
+</html>
