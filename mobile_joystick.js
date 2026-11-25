@@ -20,15 +20,34 @@
     <button class="action" aria-label="Action button">ACTION</button>`;
   document.body.appendChild(host);
 
+  // Keep a second finger on the aim surface from turning into a browser pan or
+  // pinch gesture while the movement thumb is held down.
+  const multiTouchStyle = document.createElement('style');
+  multiTouchStyle.id = 'project67-multitouch-style';
+  multiTouchStyle.textContent = 'canvas,#moveStick,#lookPad,.look-pad{touch-action:none !important;-webkit-user-select:none !important;user-select:none !important}';
+  document.head.appendChild(multiTouchStyle);
+
+  const page = location.pathname.split('/').pop();
+
+  // The two FPS trainers already include a dedicated left movement stick and
+  // a separate right look surface. Turn that native dual-control layer on for
+  // phones instead of covering it with the generic controls.
+  const nativeDualControlPages = new Set([
+    'rivals_loadout_trainer.html',
+    'aim_3d_trainer.html'
+  ]);
+  if (nativeDualControlPages.has(page) && matchMedia('(hover:none), (pointer:coarse), (max-width:820px)').matches) {
+    host.style.setProperty('display', 'none', 'important');
+    const mobileToggle = document.querySelector('#mobileToggle');
+    if (mobileToggle && !mobileToggle.classList.contains('active')) mobileToggle.click();
+  }
+
   // Replace each featured game's old directional pad, while preserving its
   // separate fire/dash/interact buttons.
-  const page = location.pathname.split('/').pop();
   const oldMovementPads = {
     'riftbound_skybreak.html': ['.touch > .stick'],
     'sixty_seven_rush.html': ['.pad'],
-    'rivals_loadout_trainer.html': ['#moveStick'],
     'bawugana_bawuganiii_rat_game.html': ['#touch > .pad'],
-    'aim_3d_trainer.html': ['#moveStick'],
     'neon_blaster.html': ['#movePad'],
     'orbit_post.html': ['.touch'],
     'rift_67.html': ['.mobile > #stick'],
@@ -69,18 +88,45 @@
     if (dy < -dead) next.add('up'); else if (dy > dead) next.add('down');
     setDirections(next);
   }
-  function release() { activePointer=null; nub.style.transform='translate(0,0)'; setDirections(new Set()); }
-  stick.addEventListener('pointerdown', e => { e.preventDefault(); activePointer=e.pointerId; stick.setPointerCapture(e.pointerId); update(e.clientX,e.clientY); });
+  function release(e) {
+    if (e && e.pointerId !== activePointer) return;
+    activePointer=null;
+    nub.style.transform='translate(0,0)';
+    setDirections(new Set());
+  }
+  stick.addEventListener('pointerdown', e => {
+    if (activePointer !== null) return;
+    e.preventDefault();
+    activePointer=e.pointerId;
+    stick.setPointerCapture(e.pointerId);
+    update(e.clientX,e.clientY);
+  });
   stick.addEventListener('pointermove', e => { if(e.pointerId===activePointer) update(e.clientX,e.clientY); });
   stick.addEventListener('pointerup', release);
   stick.addEventListener('pointercancel', release);
+  stick.addEventListener('lostpointercapture', release);
+  const actionPointers = new Set();
   function actionEvent(type) {
     const down=type==='keydown';
     action.classList.toggle('pressed',down);
     document.dispatchEvent(new KeyboardEvent(type,{key:' ',code:'Space',bubbles:true,cancelable:true}));
   }
-  action.addEventListener('pointerdown',e=>{e.preventDefault();action.setPointerCapture(e.pointerId);actionEvent('keydown')});
-  action.addEventListener('pointerup',()=>actionEvent('keyup'));
-  action.addEventListener('pointercancel',()=>actionEvent('keyup'));
-  addEventListener('blur',()=>{release();actionEvent('keyup')});
+  action.addEventListener('pointerdown',e=>{
+    e.preventDefault();
+    actionPointers.add(e.pointerId);
+    action.setPointerCapture(e.pointerId);
+    if (actionPointers.size === 1) actionEvent('keydown');
+  });
+  function releaseAction(e) {
+    actionPointers.delete(e.pointerId);
+    if (!actionPointers.size) actionEvent('keyup');
+  }
+  action.addEventListener('pointerup',releaseAction);
+  action.addEventListener('pointercancel',releaseAction);
+  action.addEventListener('lostpointercapture',releaseAction);
+  addEventListener('blur',()=>{
+    release();
+    actionPointers.clear();
+    actionEvent('keyup');
+  });
 })();
